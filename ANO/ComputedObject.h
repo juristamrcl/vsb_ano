@@ -12,7 +12,7 @@ private:
 	Mat thresholded;
 	Mat indexed;
 	Mat colored;
-	list<Feature> features;
+	list<FeatureObject> featureObjects;
 
 public:
 	ComputedObject(Mat thresholded) {
@@ -45,36 +45,42 @@ public:
 		this->colored = colored;
 	}
 
-	void setFeatures(list<Feature> features) {
-		this->features = features;
+	void setFeatures(list<FeatureObject> features) {
+		this->featureObjects = features;
 	}
 
 	Mat getIndexed() {
 		return this->indexed;
 	}
 
-	list<Feature> getFeatures() {
-		return this->features;
+	list<FeatureObject> getObjects() {
+		return this->featureObjects;
 	}
-
+	
 	int getIndexCount() {
 		return this->indexCount;
 	}
 
-	Feature getFeature(int index) {
-		for (Feature &feature : this->features)
+	FeatureObject getFeature(int index) {
+		for (FeatureObject &feature : this->featureObjects)
+			if (feature.getIndex() == index)
+				return feature;
+	}
+	
+	FeatureObject &getFeaturePointer(int index) {
+		for (FeatureObject &feature : this->featureObjects)
 			if (feature.getIndex() == index)
 				return feature;
 	}
 
 	void showStoredImages() {
-		for (Feature &feature : this->features) {
+		for (FeatureObject &feature : this->featureObjects) {
 			std::ostringstream ss;
-			ss << feature.f1;
+			ss << feature.m00;
 			string s1(ss.str());
 
 			std::ostringstream ss2;
-			ss2 << feature.type;
+			ss2 << feature.Perimeter;
 			string s2(ss2.str());
 
 			putText(this->colored,

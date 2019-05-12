@@ -2,6 +2,8 @@
 #include "ComputedObject.h"
 #include "ObjectEthalon.h"
 #include "MainCentroid.h"
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 using namespace std;
 
@@ -85,7 +87,7 @@ int computeMoment(Mat input, int p, int q, int index) {
 	return moment;
 }
 
-void computeCenteredMoment(Mat input, Feature &feature) {
+void computeCenteredMoment(Mat input, FeatureObject &feature) {
 	double moment00 = 0.0;
 	double moment02 = 0.0;
 	double moment20 = 0.0;
@@ -111,14 +113,14 @@ void computeCenteredMoment(Mat input, Feature &feature) {
 }
 
 void computeMoments(ComputedObject &co) {
-	list<Feature> features;
+	list<FeatureObject> features;
 
 	for (int i = 1; i < co.getIndexCount() + 1; i++) {
 		float moment00 = computeMoment(co.getIndexed(), 0, 0, i);
 		float moment01 = computeMoment(co.getIndexed(), 0, 1, i);
 		float moment10 = computeMoment(co.getIndexed(), 1, 0, i);
 
-		Feature m = Feature(featureIndex++, moment00, moment01, moment10, i);
+		FeatureObject m = FeatureObject(featureIndex++, moment00, moment01, moment10, i);
 
 		computeCenteredMoment(co.getIndexed(), m);
 
@@ -130,9 +132,9 @@ void computeMoments(ComputedObject &co) {
 
 void setPerimeter(ComputedObject &co) {
 	Mat image = co.getIndexed();
-	list<Feature> tempFeatures = co.getFeatures();
+	list<FeatureObject> tempFeatures = co.getObjects();
 
-	for (Feature &feature : tempFeatures) {
+	for (FeatureObject &feature : tempFeatures) {
 		int perimeter = 0;
 		for (int y = 0; y < image.rows; y++) {
 			for (int x = 0; x < image.cols; x++) {
@@ -155,9 +157,9 @@ void setPerimeter(ComputedObject &co) {
 }
 
 void setFeatures(ComputedObject &co) {
-	list<Feature> tempFeatures = co.getFeatures();
+	list<FeatureObject> tempFeatures = co.getObjects();
 
-	for (Feature &feature : tempFeatures) {
+	for (FeatureObject &feature : tempFeatures) {
 		float f1, f2;
 		f1 = pow(feature.Perimeter, 2) / (100 * feature.cM00);
 
@@ -171,12 +173,12 @@ void setFeatures(ComputedObject &co) {
 	co.setFeatures(tempFeatures);
 }
 
-double getEuclideanDistance(Feature f, Ethalon b)
+double getEuclideanDistance(FeatureObject f, Ethalon b)
 {
 	return sqrt(pow(b.x - f.f1, 2) + pow(b.y - f.f2, 2));
 }
 
-double getEuclideanDistance(Feature f, Feature f2)
+double getEuclideanDistance(FeatureObject f, FeatureObject f2)
 {
 	return sqrt(pow(f2.f1 - f.f1, 2) + pow(f2.f2 - f.f2, 2));
 }
@@ -190,39 +192,6 @@ double getEuclideanDistance(Centroid f, Centroid f2)
 {
 	return sqrt(pow(f2.x - f.x, 2) + pow(f2.y - f.y, 2));
 }
-//void kMeans(ComputedObject co, int clustersNumber) {
-//	float limit = 0.1;
-//	float change = INFINITY;;
-//	list<Feature> tempFeatures = co.getFeatures();
-//
-//	list<Feature> randomFeatures;
-//	for (int i = 0; i < clustersNumber; i++) {
-//		int rand = 1 + (std::rand() % (co.getIndexCount() - 1 + 1));
-//		randomFeatures.push_back(co.getFeature(rand));
-//	}
-//
-//
-//	while (change > limit) {
-//		for (Feature &feature : tempFeatures) {
-//
-//			for (int i = 0; i < k; i++) {
-//
-//			}
-//		}
-//	}
-//
-//	for (Feature &feature : tempFeatures) {
-//		for (Feature &feature2 : tempFeatures) {
-//			if (feature.id != feature2.id && feature.id < feature2.id) {
-//				if (getEuclideanDistance(feature, feature2) < 0.05) {
-//					sumF1 += feature.f1;
-//					sumF2 += feature.f2;
-//					total++;
-//				}
-//			}
-//		}
-//	}
-//}
 
 list<MainCentroid> computeKMeans(ComputedObject co)
 {
@@ -233,7 +202,7 @@ list<MainCentroid> computeKMeans(ComputedObject co)
 	for (int i = 0; i < numOfCentroids; i++)
 	{
 		int index = rand() % (co.getIndexCount() - 1) + 1;
-		Feature f = co.getFeature(index);
+		FeatureObject f = co.getFeature(index);
 		MainCentroid c = MainCentroid(f.f1, f.f2);
 		centroids.push_back(c);
 	}
@@ -246,7 +215,7 @@ list<MainCentroid> computeKMeans(ComputedObject co)
 			cen.nearestCentroids.clear();
 		}
 
-		for (Feature &feature : co.getFeatures()) {
+		for (FeatureObject &feature : co.getObjects()) {
 			double distance = INFINITY;
 			MainCentroid *closestCentroid = &MainCentroid();
 			MainCentroid objectPoint = MainCentroid(feature.f1, feature.f2);
@@ -303,12 +272,12 @@ list<MainCentroid> computeKMeans(ComputedObject co)
 }
 
 void writeCentroidsToObjects(ComputedObject &co, list<MainCentroid> centroids) {
-	list<Feature> tempFeatures = co.getFeatures();
+	list<FeatureObject> tempFeatures = co.getObjects();
 
 	int index = 0;
 	for (auto &cen : centroids) {
 		for (auto &shortest : cen.nearestCentroids) {
-			for (Feature &computed : tempFeatures) {
+			for (FeatureObject &computed : tempFeatures) {
 				if (computed.getIndex() == shortest.getIndex())
 					computed.setType(index);
 			}
@@ -321,52 +290,150 @@ void writeCentroidsToObjects(ComputedObject &co, list<MainCentroid> centroids) {
 }
 
 // todo finish
-Ethalon* computeEthalons(ComputedObject &co) {
-	list<Feature> tempFeatures = co.getFeatures();
-	list<Feature> tempFeatures2 = co.getFeatures();
+list<Ethalon> computeEthalons(ComputedObject &co) {
 	list<Ethalon> ethalons;
 
-	Ethalon *objects[3];
+	int typeIndex = -1;
 
-	for (int k = 0; k < 3; k++) {
+	cout << "outputting ethalons" << endl;
+
+	for (int x = 1; x < co.getIndexCount() + 1; x++) {
+		FeatureObject &fo1 = co.getFeaturePointer(x);
+		if (fo1.getType() < 0) {
+			fo1.setType(++typeIndex);
+		}
+		for (int y = 1; y < co.getIndexCount() + 1; y++) {
+			FeatureObject &fo2 = co.getFeaturePointer(y);
+			if (fo2.getType() < 0 && fo1.getIndex() != fo2.getIndex() && getEuclideanDistance(fo1, fo2) < 0.05) {
+
+				if (fo2.getType() < 0)
+					fo2.setType(fo1.getType());
+
+			}
+		}
+	}
+
+	for (int x = 0; x < 3; x++) {
 		float sumF1 = 0.0f;
 		float sumF2 = 0.0f;
 		int total = 0;
 
-		for (int x = 1; x < co.getIndexCount() + 1; x++) {
-			Feature f1 = co.getFeature(x);
-			for (int y = x; y < co.getIndexCount() + 1; y++) {
-				Feature f2 = co.getFeature(y);
-				if (getEuclideanDistance(f1, f2) < 0.05) {
-					sumF1 += f1.f1;
-					sumF2 += f2.f2;
-					total++;
-				}
+		for (int y = 1; y < co.getIndexCount() + 1; y++) {
+			FeatureObject &fo = co.getFeaturePointer(y);
+			if (fo.getType() == x) {
+
+				sumF1 += fo.f1;
+				sumF2 += fo.f2;
+				total++;
 			}
 		}
 
-		//for (Feature &feature : tempFeatures) {
-		//	for (Feature &feature2 : tempFeatures2) {
-		//		if (feature.id != feature2.id && feature.id < feature2.id) {
-		//			if (getEuclideanDistance(feature, feature2) < 0.05) {
-		//				sumF1 += feature.f1;
-		//				sumF2 += feature.f2;
-		//				total++;
-		//			}
-		//		}
-		//	}
-		//}
-
-		Ethalon eth = Ethalon((sumF1 / total), (sumF2 / total));
-
-		cout << eth.x << endl << eth.y << endl;
-		objects[k] = &eth;
-		//ethalons.push_back(eth);
-
-		sumF1 = 0.0f;
-		sumF2 = 0.0f;
-		total = 0;
+		Ethalon ethalon = Ethalon((sumF1 / total), (sumF2 / total), x);
+		//cout << eth.x << ", " << eth.y << endl;
+		ethalons.push_back(ethalon);
 	}
 
-	return *objects;
+	return ethalons;
+}
+
+void normalize(Mat &input) {
+	double min, max;
+	minMaxLoc(input, &min, &max);
+
+	for (int x = 0; x < input.rows; x++) {
+		input.at<float>(x, 0) = (input.at<float>(x, 0) - min) / (max - min);
+	}
+	return;
+}
+
+//void clasifyObjects(ComputedObject co, Ethalon * objects) {
+//
+//	for (auto &obj : co.getObjects()) {
+//		obj.
+//	}
+//}
+//
+//FeatureObject getMinimum(Ethalon * objects, FeatureObject fo) {
+//	for (auto object : objects) {
+//		obj.
+//	}
+//}
+
+void doHog(Mat image, int blockSize, int cellSize)
+{
+	int dividedSize = 9;
+
+	Mat orientation_of_gradiens_image = Mat::zeros(image.size(), CV_32FC1);
+	Mat size_of_gradiens_image = Mat::zeros(image.size(), CV_32FC1);
+
+	Mat fc1_image = Mat::zeros(image.size(), CV_32FC1);
+	image.convertTo(fc1_image, CV_32FC1);
+
+	for (int y = 1; y < fc1_image.rows - 1; y++) {
+		for (int x = 1; x < fc1_image.cols - 1; x++) {
+			float fx = fc1_image.at<float>(y, x + 1) - fc1_image.at<float>(y, x);
+			float fy = fc1_image.at<float>(y + 1, x) - fc1_image.at<float>(y, x);
+
+			float pos = (fx == 0) ? 0.0f : (atan(fy / fx) * (180 / M_PI) + 90);
+			orientation_of_gradiens_image.at<float>(y, x) = pos;
+			size_of_gradiens_image.at<float>(y, x) = sqrt(pow(fx, 2) + pow(fy, 2));
+		}
+	}
+
+	int actualBlockX = 0;
+	int actualBlockY = 0;
+
+	int finalBlockCols = image.cols / (blockSize * cellSize);
+	int finalBlockRows = image.rows / (blockSize * cellSize);
+
+	Mat block_image = Mat::zeros(finalBlockRows, finalBlockCols, CV_32FC1);
+
+	vector<vector<Mat>> histograms(finalBlockRows);
+	
+	Mat tmpHistogram = Mat::zeros(dividedSize, 1, CV_32FC1);
+
+	for (int y = 1; y < finalBlockRows - 1; y++) {
+		histograms[y] = vector<Mat>(finalBlockCols);
+		for (int x = 1; x < finalBlockCols - 1; x++) {
+			for (int k = 0; k < cellSize; k++) {
+				for (int l = 0; l < cellSize; l++) {
+					int realY = y * cellSize + k;
+					int realX = x * cellSize + l;
+					float pos = orientation_of_gradiens_image.at<float>(realY, realX);
+					int posX = int(pos) / 20;
+
+					float sizeAtPos = size_of_gradiens_image.at<float>(realY, realX);
+
+					tmpHistogram.at<float>(posX, 0) += sizeAtPos;
+				}
+			}
+
+			histograms[y][x] = tmpHistogram.clone();
+			//cout << tmpHistogram << endl;
+
+			tmpHistogram = Mat::zeros(dividedSize, 1, CV_32FC1);
+		}
+	}
+
+	vector<Mat> finalHistograms(finalBlockRows);
+
+	for (int y = 1; y < finalBlockRows - 1; y+=2) {
+		Mat hist = Mat::zeros(dividedSize, 1, CV_32FC1);
+		for (int x = 1; x < finalBlockCols - 1; x+=2) {
+			for (int k = 0; k < histograms[y][x].rows; k++) {
+				hist.at<float>(k, 0) += histograms[y][x].at<float>(k, 0);
+				hist.at<float>(k, 0) += histograms[y + 1][x].at<float>(k, 0);
+				hist.at<float>(k, 0) += histograms[y][x + 1].at<float>(k, 0);
+				hist.at<float>(k, 0) += histograms[y + 1][x + 1].at<float>(k, 0);
+				float tmp = hist.at<float>(k, 0);
+			}
+		}
+		normalize(hist);
+		finalHistograms[y] = hist.clone();
+		cout << hist << endl;
+	}
+
+	imshow("Gradient", orientation_of_gradiens_image);
+
+	cv::waitKey(0);
 }

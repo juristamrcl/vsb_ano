@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-class Feature {
+class FeatureObject {
 public:
 	int id;
 	int objectIndex;
@@ -20,9 +20,9 @@ public:
 	float f1;
 	float f2;
 
-	Feature(){}
+	FeatureObject(){}
 
-	Feature(int id, float m00, float m01, float m10, int objectIndex) {
+	FeatureObject(int id, float m00, float m01, float m10, int objectIndex) {
 		this->id = id;
 		this->objectIndex = objectIndex;
 		this->m00 = m00;
@@ -43,6 +43,11 @@ public:
 
 	float getYt() {
 		return this->yt;
+	}
+	
+
+	float getType() {
+		return this->type;
 	}
 
 	void setCm00(float cM00) {

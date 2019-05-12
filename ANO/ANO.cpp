@@ -77,104 +77,6 @@ void ComputeEthalons(ObjectFeature &feature)
 
 }
 
-//void ComputeKMeans(ObjectFeature &feature)
-//{
-//	//std::cout << "Computing k-means" << std::endl;
-//
-//	int numOfCentroids = feature.Ethalons.size();
-//	srand(time(NULL));
-//	std::list<CentroidObject> centroids;
-//
-//	for (int i = 0; i < numOfCentroids; i++)
-//	{
-//		int index = rand() % (feature.Objects.size() - 1) + 1;
-//		std::list<FeatureList>::iterator it = feature.Objects.begin();
-//		std::advance(it, index);
-//		CentroidObject c;
-//		c.Centroid = MyPoint((*it).Feature1, (*it).Feature2);
-//		centroids.push_back(c);
-//	}
-//	double delta = 0.05;
-//	bool iterate = true;
-//
-//	while (iterate)
-//	{
-//		//clear closestobject list from previous iteration
-//		std::list<CentroidObject>::iterator cen = centroids.begin();
-//		while (cen != centroids.end())
-//		{
-//			(*cen).ClosestObjects.clear();
-//			cen++;
-//		}
-//
-//		//asign objects to centroids
-//		std::list<FeatureList>::iterator obj = feature.Objects.begin();
-//		while (obj != feature.Objects.end())
-//		{
-//			double distance = INFINITY;
-//			CentroidObject *closestCentroid = nullptr;
-//			MyPoint objectPoint = MyPoint((*obj).Feature1, (*obj).Feature2);
-//			std::list<CentroidObject>::iterator cen = centroids.begin();
-//			while (cen != centroids.end())
-//			{
-//				double temp = ComputeEuclideanDistance((*cen).Centroid, objectPoint);
-//				if (temp < distance)
-//				{
-//					distance = temp;
-//					closestCentroid = &(*cen);
-//				}
-//
-//				cen++;
-//			}
-//			closestCentroid->ClosestObjects.push_back((*obj));
-//			obj++;
-//		}
-//
-//		int tmp = 0;
-//		//compute centroids
-//		cen = centroids.begin();
-//		while (cen != centroids.end())
-//		{
-//			if ((*cen).ClosestObjects.size() > 0)
-//			{
-//				MyPoint oldCentroid = (*cen).Centroid;
-//				double sumX = 0.0;
-//				double sumY = 0.0;
-//				int count = 0;
-//				std::list<FeatureList>::iterator obj = (*cen).ClosestObjects.begin();
-//				while (obj != (*cen).ClosestObjects.end())
-//				{
-//					sumX += (*obj).Feature1;
-//					sumY += (*obj).Feature2;
-//					count++;
-//					obj++;
-//				}
-//
-//				MyPoint newCentroid = MyPoint(sumX / count, sumY / count);
-//				double dist = ComputeEuclideanDistance(oldCentroid, newCentroid);
-//				if (dist <= delta)
-//				{
-//					if (tmp == 0)
-//						iterate = false;
-//				}
-//				else
-//				{
-//					iterate = true;
-//				}
-//
-//				(*cen).Centroid = newCentroid;
-//
-//				tmp++;
-//			}
-//			
-//			cen++;
-//		}
-//	}
-//	
-//	feature.Centroids = centroids;
-//	//std::cout << "Done ..." << std::endl;
-//
-//}
 
 void train(NN* nn)
 {
@@ -258,15 +160,18 @@ int main(int argc, char** argv)
 
 	ComputedObject co = ComputedObject(thresholded);
 
+	/*doHog*/(trainGrayscale, 2, 8);
+
 	floodFill(thresholded, co);
 	computeMoments(co);
 	setPerimeter(co);
 	setFeatures(co);
-	Ethalon* output = computeEthalons(co);
+
+	list<Ethalon> output = computeEthalons(co);
 
 	list<MainCentroid> centroids = computeKMeans(co);
 
-	writeCentroidsToObjects(co, centroids);
+	//writeCentroidsToObjects(co, centroids);
 
 	/*NN * nn = createNN(2, 4, 2);
 	train(nn);

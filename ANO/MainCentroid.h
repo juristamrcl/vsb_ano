@@ -8,7 +8,7 @@ class MainCentroid {
 public:
 	float x;
 	float y;
-	list<Feature> nearestCentroids;
+	list<FeatureObject> nearestCentroids;
 
 	MainCentroid() {}
 	MainCentroid(float x, float y) {
