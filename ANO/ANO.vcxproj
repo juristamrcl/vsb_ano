@@ -159,7 +159,6 @@
     <ClInclude Include="ComputedObject.h" />
     <ClInclude Include="MainCentroid.h" />
     <ClInclude Include="ObjectEthalon.h" />
-    <ClInclude Include="ObjectFeature.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ComputingFeatures.h" />

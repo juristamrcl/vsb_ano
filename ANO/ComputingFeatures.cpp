@@ -188,14 +188,13 @@ double getEuclideanDistance(Centroid f, MainCentroid f2)
 	return sqrt(pow(f2.x - f.x, 2) + pow(f2.y - f.y, 2));
 }
 
-double getEuclideanDistance(Centroid f, Centroid f2)
+float getEuclideanDistance(Centroid f, Centroid f2)
 {
 	return sqrt(pow(f2.x - f.x, 2) + pow(f2.y - f.y, 2));
 }
 
-list<MainCentroid> computeKMeans(ComputedObject co)
+list<MainCentroid> computeKMeans(ComputedObject co, int numOfCentroids)
 {
-	int numOfCentroids = 3;
 	srand(time(NULL));
 	std::list<MainCentroid> centroids;
 
@@ -290,36 +289,42 @@ void writeCentroidsToObjects(ComputedObject &co, list<MainCentroid> centroids) {
 }
 
 // todo finish
-list<Ethalon> computeEthalons(ComputedObject &co) {
-	list<Ethalon> ethalons;
+list<Centroid> computeEthalons(ComputedObject &co, int numOfObjects) {
+	list<Centroid> centroids;
 
 	int typeIndex = -1;
 
 	cout << "outputting ethalons" << endl;
 
-	for (int x = 1; x < co.getIndexCount() + 1; x++) {
+	for (int x = 1; x < co.getIndexCount(); x += 4) {
+		FeatureObject &fo1 = co.getFeaturePointer(x);
+		++typeIndex;
+		for (int y = x; y < x + 4; y++) {
+			FeatureObject &fo2 = co.getFeaturePointer(y);
+			fo2.setType(typeIndex);
+		}
+	}
+	/*for (int x = 1; x < co.getIndexCount() + 1; x++) {
 		FeatureObject &fo1 = co.getFeaturePointer(x);
 		if (fo1.getType() < 0) {
 			fo1.setType(++typeIndex);
 		}
 		for (int y = 1; y < co.getIndexCount() + 1; y++) {
 			FeatureObject &fo2 = co.getFeaturePointer(y);
-			if (fo2.getType() < 0 && fo1.getIndex() != fo2.getIndex() && getEuclideanDistance(fo1, fo2) < 0.05) {
-
-				if (fo2.getType() < 0)
-					fo2.setType(fo1.getType());
+			if (fo2.getType() < 0 && fo1.getIndex() != fo2.getIndex() && getEuclideanDistance(fo1, fo2) < 0.0407652) {
+				fo2.setType(fo1.getType());
 
 			}
 		}
-	}
+	}*/
 
-	for (int x = 0; x < 3; x++) {
+	for (int x = 0; x < numOfObjects; x++) {
 		float sumF1 = 0.0f;
 		float sumF2 = 0.0f;
 		int total = 0;
 
 		for (int y = 1; y < co.getIndexCount() + 1; y++) {
-			FeatureObject &fo = co.getFeaturePointer(y);
+			FeatureObject fo = co.getFeature(y);
 			if (fo.getType() == x) {
 
 				sumF1 += fo.f1;
@@ -328,12 +333,12 @@ list<Ethalon> computeEthalons(ComputedObject &co) {
 			}
 		}
 
-		Ethalon ethalon = Ethalon((sumF1 / total), (sumF2 / total), x);
-		//cout << eth.x << ", " << eth.y << endl;
-		ethalons.push_back(ethalon);
+		Centroid ethalon = Centroid((sumF1 / total), (sumF2 / total), x);
+
+		centroids.push_back(ethalon);
 	}
 
-	return ethalons;
+	return centroids;
 }
 
 void normalize(Mat &input) {
@@ -346,18 +351,44 @@ void normalize(Mat &input) {
 	return;
 }
 
-//void clasifyObjects(ComputedObject co, Ethalon * objects) {
-//
-//	for (auto &obj : co.getObjects()) {
-//		obj.
-//	}
-//}
-//
-//FeatureObject getMinimum(Ethalon * objects, FeatureObject fo) {
-//	for (auto object : objects) {
-//		obj.
-//	}
-//}
+int getMinimumType(list<Centroid> ethalons, Centroid c) {
+	int minClass = 0;
+	float minDist = 10000.0;
+	for (auto eth : ethalons) {
+		if (getEuclideanDistance(c, eth) < minDist) {
+			minDist = getEuclideanDistance(c, eth);
+			minClass = eth.objectClass;
+		}
+	}
+
+	return minClass;
+}
+
+void clasifyObjects(ComputedObject& co, list<Centroid> ethalons) {
+
+	Mat out = co.getColored();
+	for (auto &obj : co.getObjects()) {
+		Centroid c = Centroid(obj.f1, obj.f2);
+		int temp = getMinimumType(ethalons, c);
+		obj.setType(temp);
+
+		cout << "Object: " << obj.getIndex() << ", type: " << temp << endl;
+
+		std::ostringstream ss;
+		ss << obj.getType();
+		string s1(ss.str());
+
+		putText(out,
+			s1,
+			Point(obj.getXt() - 5, obj.getYt() - 6), // Coordinates
+			cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
+			0.5, // Scale. 2.0 = 2x bigger
+			cv::Scalar(255, 255, 255));
+	}
+
+	imshow("Colored", out);
+	cv::waitKey(0);
+}
 
 void doHog(Mat image, int blockSize, int cellSize)
 {

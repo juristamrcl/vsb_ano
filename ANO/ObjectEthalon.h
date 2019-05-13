@@ -1,25 +1,22 @@
 #pragma once
 #include "pch.h"
 
-using namespace cv;
-
 class Ethalon {
 public:
 	float x;
 	float y;
 	int objectClass;
-	//FeatureObject closestObject = FeatureObject();
+	FeatureObject closestObject = FeatureObject();
 
 	Ethalon() {
-		this->x = 0;
-		this->y = 0;
-		this->objectClass = -1;
+		this->x = 0.0f;
+		this->y = 0.0f;
+		this->objectClass = -1.0f;
 	}
 
 	Ethalon(float x, float y) {
 		this->x = x;
 		this->y = y;
-		this->objectClass = 0;
 	}
 
 	Ethalon(float x, float y, int oClass) {

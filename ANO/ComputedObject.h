@@ -49,6 +49,11 @@ public:
 		this->featureObjects = features;
 	}
 
+
+	Mat getColored() {
+		return this->colored;
+	}
+
 	Mat getIndexed() {
 		return this->indexed;
 	}

@@ -153,23 +153,34 @@ void test(NN* nn, int num_samples = 10)
 
 int main(int argc, char** argv)
 {
-	Mat thresholded;
+	Mat thresholded, testThresholded;
 
 	Mat trainGrayscale = imread("images/train.png", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat testGrayscale = imread("images/test01.png", CV_LOAD_IMAGE_GRAYSCALE);
+
 	thresholded = thresholdImage(trainGrayscale, 40.0f);
+	testThresholded = thresholdImage(testGrayscale, 40.0f);
 
 	ComputedObject co = ComputedObject(thresholded);
+	ComputedObject coTest = ComputedObject(testThresholded);
 
-	/*doHog*/(trainGrayscale, 2, 8);
+	/*doHog(trainGrayscale, 2, 8);*/
 
 	floodFill(thresholded, co);
 	computeMoments(co);
 	setPerimeter(co);
 	setFeatures(co);
 
-	list<Ethalon> output = computeEthalons(co);
+	floodFill(testThresholded, coTest);
+	computeMoments(coTest);
+	setPerimeter(coTest);
+	setFeatures(coTest);
 
-	list<MainCentroid> centroids = computeKMeans(co);
+	list<Centroid> output = computeEthalons(co, 3);
+
+	clasifyObjects(coTest, output);
+
+	list<MainCentroid> centroids = computeKMeans(co, 4);
 
 	//writeCentroidsToObjects(co, centroids);
 
