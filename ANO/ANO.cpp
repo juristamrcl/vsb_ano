@@ -157,6 +157,7 @@ int main(int argc, char** argv)
 
 	Mat trainGrayscale = imread("images/train.png", CV_LOAD_IMAGE_GRAYSCALE);
 	Mat testGrayscale = imread("images/test01.png", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat hogImage = imread("images/hog_test.png", CV_LOAD_IMAGE_GRAYSCALE);
 
 	thresholded = thresholdImage(trainGrayscale, 40.0f);
 	testThresholded = thresholdImage(testGrayscale, 40.0f);
@@ -164,7 +165,7 @@ int main(int argc, char** argv)
 	ComputedObject co = ComputedObject(thresholded);
 	ComputedObject coTest = ComputedObject(testThresholded);
 
-	/*doHog(trainGrayscale, 2, 8);*/
+	doHog(hogImage, 2, 8);
 
 	floodFill(thresholded, co);
 	computeMoments(co);

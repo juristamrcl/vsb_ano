@@ -346,7 +346,10 @@ void normalize(Mat &input) {
 	minMaxLoc(input, &min, &max);
 
 	for (int x = 0; x < input.rows; x++) {
-		input.at<float>(x, 0) = (input.at<float>(x, 0) - min) / (max - min);
+		if ((max - min) == 0){
+			input.at<float>(x, 0) = 0;
+		}
+		else input.at<float>(x, 0) = (input.at<float>(x, 0) - min) / (max - min);
 	}
 	return;
 }
@@ -423,9 +426,9 @@ void doHog(Mat image, int blockSize, int cellSize)
 	
 	Mat tmpHistogram = Mat::zeros(dividedSize, 1, CV_32FC1);
 
-	for (int y = 1; y < finalBlockRows - 1; y++) {
+	for (int y = 0; y < finalBlockRows; y++) {
 		histograms[y] = vector<Mat>(finalBlockCols);
-		for (int x = 1; x < finalBlockCols - 1; x++) {
+		for (int x = 0; x < finalBlockCols; x++) {
 			for (int k = 0; k < cellSize; k++) {
 				for (int l = 0; l < cellSize; l++) {
 					int realY = y * cellSize + k;
@@ -438,31 +441,31 @@ void doHog(Mat image, int blockSize, int cellSize)
 					tmpHistogram.at<float>(posX, 0) += sizeAtPos;
 				}
 			}
-
+			normalize(tmpHistogram);
 			histograms[y][x] = tmpHistogram.clone();
-			//cout << tmpHistogram << endl;
+			cout << tmpHistogram << endl;
 
 			tmpHistogram = Mat::zeros(dividedSize, 1, CV_32FC1);
 		}
 	}
 
-	vector<Mat> finalHistograms(finalBlockRows);
+	//vector<Mat> finalHistograms(finalBlockRows);
 
-	for (int y = 1; y < finalBlockRows - 1; y+=2) {
-		Mat hist = Mat::zeros(dividedSize, 1, CV_32FC1);
-		for (int x = 1; x < finalBlockCols - 1; x+=2) {
-			for (int k = 0; k < histograms[y][x].rows; k++) {
-				hist.at<float>(k, 0) += histograms[y][x].at<float>(k, 0);
-				hist.at<float>(k, 0) += histograms[y + 1][x].at<float>(k, 0);
-				hist.at<float>(k, 0) += histograms[y][x + 1].at<float>(k, 0);
-				hist.at<float>(k, 0) += histograms[y + 1][x + 1].at<float>(k, 0);
-				float tmp = hist.at<float>(k, 0);
-			}
-		}
-		normalize(hist);
-		finalHistograms[y] = hist.clone();
-		cout << hist << endl;
-	}
+	//for (int y = 1; y < finalBlockRows - 1; y++) {
+	//	Mat hist = Mat::zeros(dividedSize, 1, CV_32FC1);
+	//	for (int x = 1; x < finalBlockCols - 1; x++) {
+	//		for (int k = 0; k < histograms[y][x].rows; k++) {
+	//			hist.at<float>(k, 0) += histograms[y][x].at<float>(k, 0);
+	//			hist.at<float>(k, 0) += histograms[y + 1][x].at<float>(k, 0);
+	//			hist.at<float>(k, 0) += histograms[y][x + 1].at<float>(k, 0);
+	//			hist.at<float>(k, 0) += histograms[y + 1][x + 1].at<float>(k, 0);
+	//			float tmp = hist.at<float>(k, 0);
+	//		}
+	//	}
+	//	normalize(hist);
+	//	finalHistograms[y] = hist.clone();
+	//	cout << hist << endl;
+	//}
 
 	imshow("Gradient", orientation_of_gradiens_image);
 
