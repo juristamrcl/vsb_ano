@@ -165,7 +165,7 @@ int main(int argc, char** argv)
 	ComputedObject co = ComputedObject(thresholded);
 	ComputedObject coTest = ComputedObject(testThresholded);
 
-	doHog(hogImage, 2, 8);
+	//doHog(hogImage, 2, 8);
 
 	floodFill(thresholded, co);
 	computeMoments(co);
@@ -177,24 +177,26 @@ int main(int argc, char** argv)
 	setPerimeter(coTest);
 	setFeatures(coTest);
 
-	list<Centroid> output = computeEthalons(co, 3);
+	list<MainCentroid> output = computeEthalons(co, 3);
 
 	clasifyObjects(coTest, output);
 
-	list<MainCentroid> centroids = computeKMeans(co, 4);
+	list<MainCentroid> centroids = computeKMeans(co, 3);
 
-	//writeCentroidsToObjects(co, centroids);
+	//clasifyObjects(coTest, centroids);
 
-	/*NN * nn = createNN(2, 4, 2);
-	train(nn);
+	writeCentroidsToObjects(co, centroids);
 
-	getchar();
+	//NN * nn = createNN(2, 4, 2);
+	//train(nn);
 
-	test(nn,100);
+	//getchar();
 
-	getchar();
+	//test(nn,100);
 
-	releaseNN(nn);*/
+	//getchar();
+
+	//releaseNN(nn);
 
 	co.showStoredImages();
 	return 0;

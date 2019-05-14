@@ -183,20 +183,20 @@ double getEuclideanDistance(FeatureObject f, FeatureObject f2)
 	return sqrt(pow(f2.f1 - f.f1, 2) + pow(f2.f2 - f.f2, 2));
 }
 
-double getEuclideanDistance(Centroid f, MainCentroid f2)
+double getEuclideanDistance(MainCentroid f, MainCentroid f2)
 {
 	return sqrt(pow(f2.x - f.x, 2) + pow(f2.y - f.y, 2));
 }
 
-float getEuclideanDistance(Centroid f, Centroid f2)
-{
-	return sqrt(pow(f2.x - f.x, 2) + pow(f2.y - f.y, 2));
-}
+//float getEuclideanDistance(MainCentroid f, MainCentroid f2)
+//{
+//	return sqrt(pow(f2.x - f.x, 2) + pow(f2.y - f.y, 2));
+//}
 
 list<MainCentroid> computeKMeans(ComputedObject co, int numOfCentroids)
 {
 	srand(time(NULL));
-	std::list<MainCentroid> centroids;
+	list<MainCentroid> centroids;
 
 	for (int i = 0; i < numOfCentroids; i++)
 	{
@@ -219,7 +219,7 @@ list<MainCentroid> computeKMeans(ComputedObject co, int numOfCentroids)
 			MainCentroid *closestCentroid = &MainCentroid();
 			MainCentroid objectPoint = MainCentroid(feature.f1, feature.f2);
 			for (auto &cen : centroids) {
-				double temp = getEuclideanDistance(Centroid(cen.x, cen.y), objectPoint);
+				double temp = getEuclideanDistance(MainCentroid(cen.x, cen.y), objectPoint);
 				if (temp < distance)
 				{
 					distance = temp;
@@ -235,7 +235,7 @@ list<MainCentroid> computeKMeans(ComputedObject co, int numOfCentroids)
 		for (auto &cen : centroids) {
 			if (cen.nearestCentroids.size() > 0)
 			{
-				Centroid oldCentroid = Centroid(cen.x, cen.y);
+				MainCentroid oldCentroid = MainCentroid(cen.x, cen.y);
 				double sumX = 0.0;
 				double sumY = 0.0;
 				int count = 0;
@@ -245,7 +245,7 @@ list<MainCentroid> computeKMeans(ComputedObject co, int numOfCentroids)
 					count++;
 				}
 
-				Centroid newCentroid = Centroid(sumX / count, sumY / count);
+				MainCentroid newCentroid = MainCentroid(sumX / count, sumY / count);
 				double dist = getEuclideanDistance(oldCentroid, newCentroid);
 				if (dist <= change)
 				{
@@ -265,9 +265,12 @@ list<MainCentroid> computeKMeans(ComputedObject co, int numOfCentroids)
 		}
 	}
 
-	return centroids;
-	//std::cout << "Done ..." << std::endl;
+	int objectIndex = -1;
+	for (auto &centroid : centroids) {
+		centroid.objectClass = ++objectIndex;
+	}
 
+	return centroids;
 }
 
 void writeCentroidsToObjects(ComputedObject &co, list<MainCentroid> centroids) {
@@ -289,8 +292,8 @@ void writeCentroidsToObjects(ComputedObject &co, list<MainCentroid> centroids) {
 }
 
 // todo finish
-list<Centroid> computeEthalons(ComputedObject &co, int numOfObjects) {
-	list<Centroid> centroids;
+list<MainCentroid> computeEthalons(ComputedObject &co, int numOfObjects) {
+	list<MainCentroid> centroids;
 
 	int typeIndex = -1;
 
@@ -304,19 +307,7 @@ list<Centroid> computeEthalons(ComputedObject &co, int numOfObjects) {
 			fo2.setType(typeIndex);
 		}
 	}
-	/*for (int x = 1; x < co.getIndexCount() + 1; x++) {
-		FeatureObject &fo1 = co.getFeaturePointer(x);
-		if (fo1.getType() < 0) {
-			fo1.setType(++typeIndex);
-		}
-		for (int y = 1; y < co.getIndexCount() + 1; y++) {
-			FeatureObject &fo2 = co.getFeaturePointer(y);
-			if (fo2.getType() < 0 && fo1.getIndex() != fo2.getIndex() && getEuclideanDistance(fo1, fo2) < 0.0407652) {
-				fo2.setType(fo1.getType());
 
-			}
-		}
-	}*/
 
 	for (int x = 0; x < numOfObjects; x++) {
 		float sumF1 = 0.0f;
@@ -333,7 +324,7 @@ list<Centroid> computeEthalons(ComputedObject &co, int numOfObjects) {
 			}
 		}
 
-		Centroid ethalon = Centroid((sumF1 / total), (sumF2 / total), x);
+		MainCentroid ethalon = MainCentroid((sumF1 / total), (sumF2 / total), x);
 
 		centroids.push_back(ethalon);
 	}
@@ -354,7 +345,7 @@ void normalize(Mat &input) {
 	return;
 }
 
-int getMinimumType(list<Centroid> ethalons, Centroid c) {
+int getMinimumType(list<MainCentroid> ethalons, MainCentroid c) {
 	int minClass = 0;
 	float minDist = 10000.0;
 	for (auto eth : ethalons) {
@@ -367,11 +358,11 @@ int getMinimumType(list<Centroid> ethalons, Centroid c) {
 	return minClass;
 }
 
-void clasifyObjects(ComputedObject& co, list<Centroid> ethalons) {
+void clasifyObjects(ComputedObject& co, list<MainCentroid> ethalons) {
 
 	Mat out = co.getColored();
 	for (auto &obj : co.getObjects()) {
-		Centroid c = Centroid(obj.f1, obj.f2);
+		MainCentroid c = MainCentroid(obj.f1, obj.f2);
 		int temp = getMinimumType(ethalons, c);
 		obj.setType(temp);
 
@@ -383,7 +374,7 @@ void clasifyObjects(ComputedObject& co, list<Centroid> ethalons) {
 
 		putText(out,
 			s1,
-			Point(obj.getXt() - 5, obj.getYt() - 6), // Coordinates
+			Point(obj.getXt() + 5, obj.getYt() - 18), // Coordinates
 			cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
 			0.5, // Scale. 2.0 = 2x bigger
 			cv::Scalar(255, 255, 255));

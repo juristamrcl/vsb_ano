@@ -19,19 +19,9 @@ public:
 		this->thresholded = thresholded;
 	};
 
-	//ComputedObject(Mat thresholded, int index, int geomId) {
-	//	this->index = index;
-	//	this->geomId = geomId;
-	//	this->thresholded = thresholded;
-	//};
-
 	void setIndexCount(int indexCount) {
 		this->indexCount = indexCount;
 	}
-
-	//void setGeomId(int geomId) {
-	//	this->geomId = geomId;
-	//}
 
 	void setPerimeter(int perimeter) {
 		this->perimeter = perimeter;
@@ -81,11 +71,11 @@ public:
 	void showStoredImages() {
 		for (FeatureObject &feature : this->featureObjects) {
 			std::ostringstream ss;
-			ss << feature.m00;
+			ss << feature.f1;
 			string s1(ss.str());
 
 			std::ostringstream ss2;
-			ss2 << feature.Perimeter;
+			ss2 << feature.f2;
 			string s2(ss2.str());
 
 			putText(this->colored,
@@ -104,7 +94,7 @@ public:
 		}
 		
 		imshow("Thresholded", this->thresholded);
-		imshow("Colored", this->colored);
+		imshow("Stored", this->colored);
 
 		cv::waitKey(0);
 	}
