@@ -17,5 +17,5 @@ double getEuclideanDistance(FeatureObject f, Ethalon b);
 list<MainCentroid> computeKMeans(ComputedObject co, int numOfCentroids);
 void writeCentroidsToObjects(ComputedObject &co, list<MainCentroid> centroids);
 void doHog(Mat image, int blockSize, int cellSize);
-void clasifyObjects(ComputedObject& co, list<MainCentroid> ethalons);
+void clasifyObjects(ComputedObject& co, list<MainCentroid> ethalons, string windowName);
 int getMinimumType(list<MainCentroid> ethalons, MainCentroid c);

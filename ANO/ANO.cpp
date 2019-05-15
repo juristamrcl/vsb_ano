@@ -11,76 +11,9 @@
 using namespace cv;
 using namespace std;
 
-
-double ComputeEuclideanDistance(MyPoint a, Ethalon b)
-{
-	double distance = sqrt( pow(b.x-a.x,2) + pow(b.y - a.y,2) );
-	return distance;
-}
-
-double ComputeEuclideanDistance(MyPoint a, MyPoint b)
-{
-	double distance = sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
-	return distance;
-}
-
-void ComputeEthalons(ObjectFeature &feature)
-{
-	//std::cout << "Computing  ethalons" << std::endl;
-
-	double x = 0.0;
-	double y = 0.0;
-	std::list<Ethalon> ethalons;
-	Ethalon currentEthalon = Ethalon(0.0,0.0);
-	std::list<FeatureList>::iterator obj = feature.Objects.begin();
-	while (obj != feature.Objects.end())
-	{
-		//feature1 => x
-		//feature2 => y
-
-		if (currentEthalon.x == 0.0)
-		{
-			currentEthalon = Ethalon((*obj).Feature1, (*obj).Feature2);
-			ethalons.push_back(currentEthalon);
-		}
-		else
-		{
-			MyPoint currentPoint = MyPoint((*obj).Feature1, (*obj).Feature2);
-			std::list<Ethalon>::iterator eth = ethalons.begin();
-			bool found = false;
-			while (eth != ethalons.end())
-			{
-				if (ComputeEuclideanDistance(currentPoint, (*eth)) < 0.2)
-				{
-					(*eth) = Ethalon((currentPoint.x + (*eth).x) / 2, (currentPoint.y + (*eth).y) / 2);
-					found = true;
-				}
-
-				eth++;
-			}
-			if (!found)
-			{
-				ethalons.push_back(Ethalon(currentPoint.x,currentPoint.y));
-			}
-		}
-		obj++;
-	}
-	std::list<Ethalon>::iterator eth = ethalons.begin();
-	while (eth != ethalons.end())
-	{
-		(*eth).AddClass();
-		eth++;
-	}
-
-	feature.Ethalons = ethalons;
-	//std::cout << "Done ..." << std::endl;
-
-}
-
-
 void train(NN* nn)
 {
-	int n =1000;
+	int n = 1000;
 	double ** trainingSet = new double *[n];
 	for (int i = 0; i < n; i++) {
 		trainingSet[i] = new double[nn->n[0] + nn->n[nn->l - 1]];
@@ -102,6 +35,64 @@ void train(NN* nn)
 
 	double error = 1.0;
 	int i = 0;
+	while (error > 0.001)
+	{
+		setInput(nn, trainingSet[i%n]);
+		feedforward(nn);
+		error = backpropagation(nn, &trainingSet[i%n][nn->n[0]]);
+		i++;
+		printf("\rerr=%0.3f", error);
+	}
+	printf(" (%d iterations)\n", i);
+
+	for (i = 0; i < n; i++) {
+		delete[] trainingSet[i];
+	}
+	delete[] trainingSet;
+}
+
+void trainDataset(NN* nn, ComputedObject co)
+{
+	list<FeatureObject> objects = co.getObjects();
+	int n = objects.size();
+	double ** trainingSet = new double *[n];
+
+	int i = 0;
+	for (auto &object : objects) {
+		trainingSet[i] = new double[nn->n[0] + nn->n[nn->l - 1]];
+
+		bool classA = i % 2;
+
+		for (int j = 0; j < nn->n[0]; j++) {
+			if (j % 2) {
+				trainingSet[i][j] = (double)object.f1;
+			}
+			else {
+				trainingSet[i][j] = (double)object.f2;
+			}
+		}
+
+		if (object.getType() == 0) {
+			trainingSet[i][nn->n[0]] = 1.0;
+			trainingSet[i][nn->n[0] + 1] = 0.0;
+			trainingSet[i][nn->n[0] + 2] = 0.0;
+		}
+		else if (object.getType() == 1) {
+			trainingSet[i][nn->n[0]] = 0.0;
+			trainingSet[i][nn->n[0] + 1] = 1.0;
+			trainingSet[i][nn->n[0] + 2] = 0.0;
+		}
+		else if (object.getType() == 2) {
+			trainingSet[i][nn->n[0]] = 0.0;
+			trainingSet[i][nn->n[0] + 1] = 0.0;
+			trainingSet[i][nn->n[0] + 2] = 1.0;
+		}
+
+		++i;
+	}
+
+	double error = 1.0;
+	i = 0;
 	while (error > 0.001)
 	{
 		setInput(nn, trainingSet[i%n]);
@@ -151,6 +142,41 @@ void test(NN* nn, int num_samples = 10)
 	printf("test error: %.2f\n", err);
 }
 
+void testDataset(NN* nn, ComputedObject co)
+{
+	list<FeatureObject> objects = co.getObjects();
+	double* in = new double[nn->n[0]];
+
+	int num_err = 0;
+	int i = 0;
+	for (auto &object : objects) {
+		bool classA = i % 2;
+
+		for (int j = 0; j < nn->n[0]; j++)
+		{
+			if (j % 2) {
+				in[j] = object.f1;
+			}
+			else {
+				in[j] = object.f2;
+			}
+		}
+		int classReal = object.getType();
+
+		printf("predicted: %d\n", classReal);
+		setInput(nn, in, true);
+
+		feedforward(nn);
+		int output = getOutput(nn, true);
+		if (output == classReal) num_err++;
+		printf("\n");
+		i++;
+	}
+
+	double err = (double)num_err / objects.size();
+	printf("test error: %.2f\n", err);
+}
+
 int main(int argc, char** argv)
 {
 	Mat thresholded, testThresholded;
@@ -179,13 +205,15 @@ int main(int argc, char** argv)
 
 	list<MainCentroid> output = computeEthalons(co, 3);
 
-	clasifyObjects(coTest, output);
+	cout << endl << "Ethalons clasified: " << endl;
+	clasifyObjects(coTest, output, "ethalons");
 
 	list<MainCentroid> centroids = computeKMeans(co, 3);
 
-	//clasifyObjects(coTest, centroids);
+	cout << endl << "K-means clasified: " << endl;
+	clasifyObjects(coTest, centroids, "kmeans");
 
-	writeCentroidsToObjects(co, centroids);
+	//writeCentroidsToObjects(co, centroids);
 
 	//NN * nn = createNN(2, 4, 2);
 	//train(nn);
@@ -193,6 +221,17 @@ int main(int argc, char** argv)
 	//getchar();
 
 	//test(nn,100);
+
+	//getchar();
+
+	//releaseNN(nn);
+
+	//NN * nn = createNN(2, 4, 3);
+	//trainDataset(nn, co);
+
+	//getchar();
+
+	//testDataset(nn,coTest);
 
 	//getchar();
 

@@ -358,13 +358,17 @@ int getMinimumType(list<MainCentroid> ethalons, MainCentroid c) {
 	return minClass;
 }
 
-void clasifyObjects(ComputedObject& co, list<MainCentroid> ethalons) {
+void clasifyObjects(ComputedObject& co, list<MainCentroid> ethalons, string windowName) {
 
-	Mat out = co.getColored();
+	Mat out;
+	co.getColored().copyTo(out);
+
 	for (auto &obj : co.getObjects()) {
 		MainCentroid c = MainCentroid(obj.f1, obj.f2);
 		int temp = getMinimumType(ethalons, c);
+		FeatureObject &fo2 = co.getFeaturePointer(obj.getIndex());
 		obj.setType(temp);
+		fo2.setType(temp);
 
 		cout << "Object: " << obj.getIndex() << ", type: " << temp << endl;
 
@@ -372,15 +376,27 @@ void clasifyObjects(ComputedObject& co, list<MainCentroid> ethalons) {
 		ss << obj.getType();
 		string s1(ss.str());
 
+
+		std::ostringstream ss2;
+		ss2 << obj.getIndex();
+		string s2(ss2.str());
+
 		putText(out,
 			s1,
 			Point(obj.getXt() + 5, obj.getYt() - 18), // Coordinates
 			cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
 			0.5, // Scale. 2.0 = 2x bigger
 			cv::Scalar(255, 255, 255));
+
+		putText(out,
+			s2,
+			Point(obj.getXt() - 3, obj.getYt() + 5), // Coordinates
+			cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
+			0.8, // Scale. 2.0 = 2x bigger
+			cv::Scalar(255, 255, 255));
 	}
 
-	imshow("Colored", out);
+	imshow("Clasified - " + windowName, out);
 	cv::waitKey(0);
 }
 

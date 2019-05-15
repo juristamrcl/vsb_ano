@@ -81,7 +81,6 @@ void releaseNN( NN *& nn )
 
 void feedforward(NN * nn)
 {
-
 	for (int k = 1; k < nn->l; k++)//layers
 	{
 		for (int i = 0; i < nn->n[k]; i++)//neurons
@@ -120,7 +119,7 @@ double backpropagation(NN * nn, double * t)
 		}
 	}
 
-	for (int k = 0; k < nn->l-1; k++)//layers
+	for (int k = 0; k < nn->l - 1; k++)//layers
 	{
 		for (int i = 0; i < nn->n[k+1]; i++)//upper layer
 		{

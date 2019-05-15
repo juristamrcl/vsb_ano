@@ -71,7 +71,7 @@ public:
 	void showStoredImages() {
 		for (FeatureObject &feature : this->featureObjects) {
 			std::ostringstream ss;
-			ss << feature.f1;
+			ss << feature.objectIndex;
 			string s1(ss.str());
 
 			std::ostringstream ss2;
@@ -84,17 +84,10 @@ public:
 				cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
 				0.5, // Scale. 2.0 = 2x bigger
 				cv::Scalar(255, 255, 255));
-
-			putText(this->colored,
-				s2,
-				Point(feature.getXt() - 5, feature.getYt() + 6), // Coordinates
-				cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
-				0.5, // Scale. 2.0 = 2x bigger
-				cv::Scalar(255, 255, 255));
 		}
 		
-		imshow("Thresholded", this->thresholded);
-		imshow("Stored", this->colored);
+		//imshow("Thresholded", this->thresholded);
+		imshow("Colored", this->colored);
 
 		cv::waitKey(0);
 	}
